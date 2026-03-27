@@ -17,31 +17,32 @@ Grab videos, subtitles, slides, notebooks, and quizzes — all from your browser
 
 ---
 
-## Features
+## Hosted vs Local
 
-| | Feature | Description |
+CourseGrab runs in two modes. The app auto-detects which one it's in.
+
+| | **Hosted (Vercel)** | **Local** |
 |---|---|---|
-| **Video** | Video Lectures | Download at 720p, 540p, 360p, or 240p |
-| **Sub** | Subtitles & Transcripts | Any language via ISO codes |
-| **PDF** | Slides (PDF & PPTX) | Download separately by format |
-| **Nb** | Notebooks & Quizzes | Jupyter notebooks and quiz content |
-| **Zap** | Parallel Downloads | 1 to 8 concurrent jobs |
-| **TV** | Real-time Terminal | Color-coded log streaming via SSE |
-| **Save** | Persistent Settings | CAUTH, output dir, and prefs saved in browser |
+| Video downloads | Not available (512MB disk limit) | Full support, all resolutions |
+| Subtitles, slides, notebooks | Yes (ZIP download) | Yes (saved to disk) |
+| Parallel downloads | Sequential (1 job) | 8 concurrent jobs |
+| Output | ZIP file via browser | Direct to chosen folder |
+| Folder picker | N/A | Native OS dialog |
 
-## Quick Start
+**For full course downloads with videos, use the local version.**
 
-1. **Open the app** at **[coursera-downloader.vercel.app](https://coursera-downloader.vercel.app/)**
+## Quick Start (Hosted)
 
-2. **Get your CAUTH cookie:**
+1. Open **[coursera-downloader.vercel.app](https://coursera-downloader.vercel.app/)**
+2. Get your CAUTH cookie:
    - Log in to [coursera.org](https://coursera.org)
    - Open DevTools (`F12` / `Cmd+Opt+I`)
    - Go to **Application** > **Cookies** > `coursera.org`
    - Copy the **CAUTH** value
+3. Paste the course URL, enter CAUTH, select content types, and click **Download Course**
+4. A ZIP file will download automatically when done
 
-3. **Paste the course URL**, enter your CAUTH, select content types, and click **Download Course**.
-
-> **Note:** The download functionality requires running the app locally (the Vercel deployment serves as a UI preview). For actual downloads, see [Local Setup](#local-setup) below.
+> Best for: subtitles, transcripts, slides (PDF/PPTX), notebooks.
 
 ## Local Setup
 
@@ -50,7 +51,7 @@ pip install git+https://github.com/Blizzeq/coursegrab.git
 coursegrab
 ```
 
-This starts a local server at `http://127.0.0.1:8000` and opens your browser automatically.
+Opens `http://127.0.0.1:8000` in your browser. No disk limits, full video support, 8x parallel downloads.
 
 <details>
 <summary><strong>From source (development)</strong></summary>
@@ -70,16 +71,26 @@ pytest --cov=src --cov-report=term-missing
 
 </details>
 
+## Features
+
+| Feature | Description |
+|---|---|
+| Video Lectures | 720p, 540p, 360p, 240p (local only) |
+| Subtitles & Transcripts | Any language via ISO codes |
+| Slides | PDF and PPTX formats |
+| Notebooks & Quizzes | Jupyter notebooks and quiz content |
+| Real-time Terminal | Color-coded log streaming via SSE |
+| Persistent Settings | CAUTH, output dir, and prefs saved in browser |
+
 ## Configuration
 
 | Option | Description | Default |
 |---|---|---|
 | Course URL | Full Coursera course/lecture URL | — |
 | CAUTH Cookie | Auth token from browser cookies | — |
-| Output Directory | Where to save downloaded files | `~/Downloads/coursera` |
+| Output Directory | Where to save files (local only) | `~/Downloads/coursera` |
 | Video Quality | 720p / 540p / 360p / 240p | `720p` |
 | Subtitle Languages | Comma-separated ISO codes | `en,pl` |
-| Parallel Downloads | Concurrent jobs (1-8) | `4` |
 
 ## Tech Stack
 

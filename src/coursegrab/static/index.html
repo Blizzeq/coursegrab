@@ -421,6 +421,13 @@
                         if (isVercel) {
                             outputDirSection.classList.add('hidden');
                             zipNotice.classList.remove('hidden');
+                            // Disable video downloads on Vercel (512MB /tmp limit)
+                            opts.video.checked = false;
+                            opts.video.disabled = true;
+                            opts.video.closest('label').title = 'Video downloads disabled on hosted version (512MB limit). Use local install for videos.';
+                            opts.video.closest('label').classList.add('opacity-40', 'cursor-not-allowed');
+                            opts.video.closest('label').classList.remove('cursor-pointer');
+                            videoOptions.style.display = 'none';
                         }
                     })
                     .catch(() => {});
