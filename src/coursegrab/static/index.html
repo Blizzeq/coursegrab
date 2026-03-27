@@ -248,7 +248,8 @@
 
                         <!-- Right: Settings -->
                         <div class="bg-surface-container p-6 rounded-xl space-y-5">
-                            <div>
+                            <!-- Output Directory: shown only when running locally -->
+                            <div id="output-dir-section">
                                 <h4
                                     class="font-label text-[11px] uppercase tracking-[0.2em] text-on-surface-variant mb-2">
                                     Output Directory</h4>
@@ -262,6 +263,18 @@
                                     <button id="browse-btn" type="button"
                                         class="shrink-0 text-[10px] font-label uppercase tracking-wider text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded hover:bg-primary/10"
                                         title="Browse for folder">Browse</button>
+                                </div>
+                            </div>
+                            <!-- ZIP download notice: shown on Vercel -->
+                            <div id="zip-notice" class="hidden">
+                                <h4
+                                    class="font-label text-[11px] uppercase tracking-[0.2em] text-on-surface-variant mb-2">
+                                    Output</h4>
+                                <div
+                                    class="bg-surface-container-lowest p-3 rounded border border-outline-variant/10 flex items-center gap-3">
+                                    <span
+                                        class="material-symbols-outlined text-primary text-lg">archive</span>
+                                    <span class="text-xs font-label text-on-surface-variant">Files will be packed into a <strong class="text-on-surface">ZIP</strong> for download</span>
                                 </div>
                             </div>
 
@@ -316,6 +329,12 @@
                             class="hidden bg-surface-container text-on-surface-variant font-bold py-4 px-8 rounded-full border border-outline-variant/20 hover:text-white hover:bg-surface-container-high transition-all active:scale-95 duration-200">
                             Cancel
                         </button>
+                        <a id="btn-download-zip"
+                            class="hidden kinetic-gradient text-on-primary-fixed font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-3 active:scale-95 duration-200 no-underline"
+                            href="#" download>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">archive</span>
+                            Download ZIP
+                        </a>
                     </div>
                 </div>
 
@@ -375,12 +394,15 @@
 
                 const urlInput = $('url');
                 const outputInput = $('output-dir');
+                const outputDirSection = $('output-dir-section');
+                const zipNotice = $('zip-notice');
                 const cauthInput = $('cauth');
                 const videoRes = $('video-res');
                 const videoOptions = $('video-options');
                 const subtitleOptions = $('subtitle-options');
                 const btnDownload = $('btn-download');
                 const btnCancel = $('btn-cancel');
+                const btnDownloadZip = $('btn-download-zip');
                 const logContainer = $('log-container');
                 const urlError = $('url-error');
                 const slugBadge = $('slug-badge');
@@ -407,6 +429,19 @@
 
                 let currentJobId = null;
                 let lineCount = 0;
+                let isVercel = false;
+
+                // Detect Vercel mode and adapt UI
+                fetch('/api/config')
+                    .then(r => r.json())
+                    .then(cfg => {
+                        isVercel = cfg.vercel;
+                        if (isVercel) {
+                            outputDirSection.classList.add('hidden');
+                            zipNotice.classList.remove('hidden');
+                        }
+                    })
+                    .catch(() => {});
 
                 // Restore saved values
                 const savedCauth = sessionStorage.getItem('coursera_cauth');
@@ -420,7 +455,7 @@
                 outputInput.addEventListener('change', () => localStorage.setItem('coursera_output_dir', outputInput.value));
                 subtitleLangs.addEventListener('change', () => localStorage.setItem('coursera_subtitle_langs', subtitleLangs.value));
 
-                // Browse folder button
+                // Browse folder button (local mode only)
                 const browseBtn = $('browse-btn');
                 browseBtn.addEventListener('click', async () => {
                     browseBtn.disabled = true;
@@ -464,7 +499,7 @@
                 if (!outputInput.value) {
                     fetch('/api/default-output')
                         .then(r => r.json())
-                        .then(data => { if (!outputInput.value) outputInput.value = data.path; });
+                        .then(data => { if (!outputInput.value && data.path) outputInput.value = data.path; });
                 }
 
                 opts.video.addEventListener('change', () => {
@@ -496,9 +531,12 @@
                 btnCancel.addEventListener('click', cancelDownload);
 
                 async function startDownload() {
+                    // Hide ZIP button from previous download
+                    btnDownloadZip.classList.add('hidden');
+
                     const payload = {
                         url: urlInput.value.trim(),
-                        output_dir: outputInput.value.trim(),
+                        output_dir: isVercel ? '' : outputInput.value.trim(),
                         cauth: cauthInput.value.trim(),
                         video: opts.video.checked,
                         video_resolution: videoRes.value,
@@ -588,6 +626,7 @@
                             else if (msg.startsWith('ERROR') || msg.includes('ERROR')) { color = 'text-error'; tag = 'ERR'; }
                             else if (msg.includes('complete') || msg.includes('Complete') || msg.includes('SUCCESS')) { color = 'text-secondary'; tag = 'OK'; }
                             else if (msg.includes('cancelled') || msg.includes('Cancel')) { color = 'text-tertiary'; tag = 'STOP'; }
+                            else if (msg.includes('ZIP')) { color = 'text-primary'; tag = 'ZIP'; }
 
                             const div = document.createElement('div');
                             div.className = 'flex gap-2';
@@ -596,6 +635,25 @@
                             logContainer.scrollTop = logContainer.scrollHeight;
                             lineCount++;
                             statLines.textContent = lineCount;
+                            break;
+                        }
+                        case 'zip_ready': {
+                            const url = `/api/download/${event.job_id}/zip`;
+                            appendLog(`ZIP ready: ${event.file_count} files, ${event.size_mb} MB`, 'text-secondary');
+                            statStatus.textContent = 'Packing ZIP...';
+
+                            // Show download button
+                            btnDownloadZip.href = url;
+                            btnDownloadZip.download = event.filename;
+                            btnDownloadZip.classList.remove('hidden');
+
+                            // Auto-trigger browser download
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = event.filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
                             break;
                         }
                         case 'done':

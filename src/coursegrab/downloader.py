@@ -47,7 +47,9 @@ def extract_slug(url: str) -> Optional[str]:
     return match.group("slug") if match else None
 
 
-def validate_options(options: DownloadOptions) -> list[str]:
+def validate_options(
+    options: DownloadOptions, *, skip_output_validation: bool = False
+) -> list[str]:
     """Validate download options, return list of errors."""
     errors: list[str] = []
 
@@ -62,12 +64,13 @@ def validate_options(options: DownloadOptions) -> list[str]:
             "CAUTH cookie is required. Get it from your browser DevTools (Application > Cookies > coursera.org > CAUTH)."
         )
 
-    output_path = Path(options.output_dir).expanduser()
-    if not output_path.exists():
-        try:
-            output_path.mkdir(parents=True, exist_ok=True)
-        except OSError as e:
-            errors.append(f"Cannot create output directory: {e}")
+    if not skip_output_validation:
+        output_path = Path(options.output_dir).expanduser()
+        if not output_path.exists():
+            try:
+                output_path.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                errors.append(f"Cannot create output directory: {e}")
 
     if not any(
         [
