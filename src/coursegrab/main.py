@@ -286,7 +286,7 @@ def _parse_options(data: dict) -> DownloadOptions:
         slides_pptx=bool(data.get("slides_pptx", True)),
         download_notebooks=bool(data.get("download_notebooks", False)),
         download_quizzes=bool(data.get("download_quizzes", False)),
-        parallel_jobs=int(data.get("parallel_jobs", 4)),
+        parallel_jobs=int(data.get("parallel_jobs", 8)),
     )
 
 

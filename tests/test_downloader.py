@@ -140,7 +140,7 @@ class TestBuildCommand:
         assert FAKE_CAUTH in cmd
         assert "--jobs" in cmd
         idx = cmd.index("--jobs")
-        assert cmd[idx + 1] == "4"  # default
+        assert cmd[idx + 1] == "8"  # default (max concurrent)
         assert "financial-markets-global" == cmd[-1]
 
     def test_parallel_jobs_custom(self, valid_url: str, tmp_path) -> None:

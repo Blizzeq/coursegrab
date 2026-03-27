@@ -33,7 +33,7 @@ class DownloadOptions:
     slides_pptx: bool = True
     download_notebooks: bool = False
     download_quizzes: bool = False
-    parallel_jobs: int = 4
+    parallel_jobs: int = 8
 
 
 @dataclass
