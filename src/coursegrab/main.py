@@ -112,11 +112,13 @@ async def api_download(request: Request) -> StreamingResponse:
     job = DownloadJob()
     _jobs[job_id] = job
 
-    # On Vercel, override output to temp directory
+    # On Vercel, override output to temp directory and force sequential
+    # downloads (Lambda lacks /dev/shm required by multiprocessing.Pool)
     tmp_dir = None
     if IS_VERCEL:
         tmp_dir = Path(tempfile.mkdtemp(prefix=f"coursegrab_{job_id}_"))
         options.output_dir = str(tmp_dir)
+        options.parallel_jobs = 1
 
     async def event_stream() -> AsyncGenerator[str, None]:
         try:
