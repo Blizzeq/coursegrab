@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import shutil
-import sys
 import tempfile
 import webbrowser
 from collections.abc import AsyncGenerator
@@ -55,36 +54,6 @@ async def index() -> HTMLResponse:
 async def api_config() -> JSONResponse:
     """Return runtime configuration for the frontend."""
     return JSONResponse({"vercel": IS_VERCEL})
-
-
-@app.get("/api/debug")
-async def api_debug() -> JSONResponse:
-    """Return environment debug info (temporary)."""
-    import sysconfig
-
-    scripts_dir = sysconfig.get_path("scripts")
-    exe_dir = os.path.dirname(sys.executable)
-    scripts_files = []
-    if scripts_dir and os.path.isdir(scripts_dir):
-        scripts_files = [f for f in os.listdir(scripts_dir) if "coursera" in f.lower()]
-    exe_files = []
-    if os.path.isdir(exe_dir):
-        exe_files = [f for f in os.listdir(exe_dir) if "coursera" in f.lower()]
-
-    from coursegrab.downloader import _find_coursera_helper
-
-    return JSONResponse(
-        {
-            "sys_executable": sys.executable,
-            "scripts_dir": scripts_dir,
-            "exe_dir": exe_dir,
-            "scripts_coursera_files": scripts_files,
-            "exe_coursera_files": exe_files,
-            "which_result": shutil.which("coursera-helper"),
-            "find_result": _find_coursera_helper(),
-            "path": os.environ.get("PATH", ""),
-        }
-    )
 
 
 @app.post("/api/validate")
