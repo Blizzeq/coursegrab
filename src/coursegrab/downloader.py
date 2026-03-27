@@ -204,11 +204,17 @@ async def run_download(
     exec_cmd = _build_exec_command(options)
     logger.info("Executing: %s", exec_cmd[:3])
 
+    # Set cwd to output dir so coursera-helper can write cache files
+    # (Vercel Lambda CWD /var/task is read-only)
+    work_dir = Path(options.output_dir).expanduser().resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+
     try:
         process = await asyncio.create_subprocess_exec(
             *exec_cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            cwd=str(work_dir),
         )
         job.process = process
 
