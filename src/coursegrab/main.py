@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 import tempfile
 import webbrowser
 from collections.abc import AsyncGenerator
