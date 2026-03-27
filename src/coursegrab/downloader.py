@@ -230,12 +230,22 @@ async def run_download(
     work_dir = Path(options.output_dir).expanduser().resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
 
+    # Vercel sets PYTHONPATH="_vendor" (relative). When cwd changes to /tmp,
+    # Python resolves it as /tmp/.../_vendor which doesn't exist. Fix: make
+    # any relative PYTHONPATH absolute against /var/task (Lambda root).
+    env = os.environ.copy()
+    pypath = env.get("PYTHONPATH", "")
+    if pypath and not os.path.isabs(pypath):
+        task_root = os.environ.get("LAMBDA_TASK_ROOT", "/var/task")
+        env["PYTHONPATH"] = os.path.join(task_root, pypath)
+
     try:
         process = await asyncio.create_subprocess_exec(
             *exec_cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(work_dir),
+            env=env,
         )
         job.process = process
 
