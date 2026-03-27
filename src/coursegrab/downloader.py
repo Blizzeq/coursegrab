@@ -171,6 +171,25 @@ def _find_coursera_helper() -> Optional[str]:
     return shutil.which("coursera-helper")
 
 
+def _build_exec_command(options: DownloadOptions) -> list[str]:
+    """Build the full executable command, using binary or Python import fallback."""
+    cmd = build_command(options)
+    dl_path = _find_coursera_helper()
+
+    if dl_path:
+        cmd[0] = dl_path
+        return cmd
+
+    # Fallback: invoke via Python import (works on Vercel where binary is not in PATH)
+    args = cmd[1:]  # Everything after "coursera-helper"
+    return [
+        sys.executable,
+        "-c",
+        "from coursera_helper.coursera_dl import main; main()",
+        *args,
+    ]
+
+
 async def run_download(
     options: DownloadOptions,
     job: DownloadJob,
@@ -184,17 +203,14 @@ async def run_download(
             yield f"ERROR: {err}"
         return
 
-    cmd = build_command(options)
     yield f"$ {build_command_display(options)}\n"
 
-    dl_path = _find_coursera_helper()
-    if not dl_path:
-        yield "ERROR: coursera-helper not found. Install it with: pip install coursera-helper"
-        return
+    exec_cmd = _build_exec_command(options)
+    logger.info("Executing: %s", exec_cmd[:3])
 
     try:
         process = await asyncio.create_subprocess_exec(
-            *cmd,
+            *exec_cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )

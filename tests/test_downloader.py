@@ -316,12 +316,21 @@ class TestRunDownload:
 
     @pytest.mark.anyio
     async def test_coursera_helper_not_found(self, valid_url: str, tmp_path) -> None:
-        """run_download yields error when coursera-helper binary is missing."""
+        """run_download yields error when coursera-helper is completely unavailable."""
         opts = DownloadOptions(
             url=valid_url, output_dir=str(tmp_path), cauth=FAKE_CAUTH
         )
         job = DownloadJob()
-        with patch("coursegrab.downloader.shutil.which", return_value=None):
+        with (
+            patch(
+                "coursegrab.downloader._find_coursera_helper",
+                return_value=None,
+            ),
+            patch(
+                "coursegrab.downloader.asyncio.create_subprocess_exec",
+                side_effect=FileNotFoundError,
+            ),
+        ):
             lines = [line async for line in run_download(opts, job)]
         assert any("coursera-helper not found" in line for line in lines)
 

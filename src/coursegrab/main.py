@@ -73,16 +73,18 @@ async def api_debug() -> JSONResponse:
 
     from coursegrab.downloader import _find_coursera_helper
 
-    return JSONResponse({
-        "sys_executable": sys.executable,
-        "scripts_dir": scripts_dir,
-        "exe_dir": exe_dir,
-        "scripts_coursera_files": scripts_files,
-        "exe_coursera_files": exe_files,
-        "which_result": shutil.which("coursera-helper"),
-        "find_result": _find_coursera_helper(),
-        "path": os.environ.get("PATH", ""),
-    })
+    return JSONResponse(
+        {
+            "sys_executable": sys.executable,
+            "scripts_dir": scripts_dir,
+            "exe_dir": exe_dir,
+            "scripts_coursera_files": scripts_files,
+            "exe_coursera_files": exe_files,
+            "which_result": shutil.which("coursera-helper"),
+            "find_result": _find_coursera_helper(),
+            "path": os.environ.get("PATH", ""),
+        }
+    )
 
 
 @app.post("/api/validate")
@@ -120,15 +122,15 @@ async def api_download(request: Request) -> StreamingResponse:
         try:
             yield _sse_event({"type": "started", "job_id": job_id})
 
-            async for line in run_download(options, job, skip_output_validation=IS_VERCEL):
+            async for line in run_download(
+                options, job, skip_output_validation=IS_VERCEL
+            ):
                 yield _sse_event({"type": "log", "message": line})
                 await asyncio.sleep(0)
 
             # On Vercel, create ZIP after download completes
             if IS_VERCEL and tmp_dir and not job.cancelled:
-                yield _sse_event(
-                    {"type": "log", "message": "Creating ZIP archive..."}
-                )
+                yield _sse_event({"type": "log", "message": "Creating ZIP archive..."})
                 slug = extract_slug(options.url) or "course"
                 zip_path = Path(tempfile.gettempdir()) / f"{slug}_{job_id}.zip"
                 file_count, total_bytes = await create_zip_archive(tmp_dir, zip_path)
@@ -226,13 +228,15 @@ async def api_browse_folder(start: str = "") -> JSONResponse:
 
     if platform.system() == "Darwin":
         script = (
-            f'set p to POSIX path of (choose folder with prompt '
+            f"set p to POSIX path of (choose folder with prompt "
             f'"Select output folder" default location POSIX file "{initial}")\n'
-            f'return p'
+            f"return p"
         )
         proc = subprocess.run(
             ["osascript", "-e", script],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         if proc.returncode == 0 and proc.stdout.strip():
             return JSONResponse({"path": proc.stdout.strip().rstrip("/")})

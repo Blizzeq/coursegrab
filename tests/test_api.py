@@ -70,7 +70,7 @@ async def test_cancel_nonexistent_job(client: AsyncClient) -> None:
 async def test_download_streams_sse(client: AsyncClient, default_options: dict) -> None:
     """Test that /api/download returns SSE events."""
 
-    async def fake_run_download(opts, job):
+    async def fake_run_download(opts, job, **kwargs):
         yield "INFO: Starting download"
         yield "INFO: Done"
 
