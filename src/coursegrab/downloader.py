@@ -7,6 +7,7 @@ import re
 import shlex
 import shutil
 import sys
+import sysconfig
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -155,12 +156,17 @@ def build_command_display(options: DownloadOptions) -> str:
 
 
 def _find_coursera_helper() -> Optional[str]:
-    """Find the coursera-helper binary, checking venv bin dir first."""
-    # Check alongside sys.executable (works in venvs, e.g. Vercel)
-    venv_bin = os.path.dirname(sys.executable)
-    candidate = os.path.join(venv_bin, "coursera-helper")
-    if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-        return candidate
+    """Find the coursera-helper binary across multiple locations."""
+    search_dirs = [
+        sysconfig.get_path("scripts"),  # venv/bin on Vercel
+        os.path.dirname(sys.executable),  # alongside python binary
+    ]
+    for d in search_dirs:
+        if not d:
+            continue
+        candidate = os.path.join(d, "coursera-helper")
+        if os.path.isfile(candidate):
+            return candidate
     # Fallback to PATH
     return shutil.which("coursera-helper")
 
