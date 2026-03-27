@@ -180,14 +180,10 @@ def _build_exec_command(options: DownloadOptions) -> list[str]:
         cmd[0] = dl_path
         return cmd
 
-    # Fallback: invoke via Python import (works on Vercel where binary is not in PATH)
+    # Fallback: invoke via coursegrab.runner module which handles
+    # distutils shim for Python 3.12+ before importing coursera-helper
     args = cmd[1:]  # Everything after "coursera-helper"
-    return [
-        sys.executable,
-        "-c",
-        "from coursera_helper.coursera_dl import main; main()",
-        *args,
-    ]
+    return [sys.executable, "-m", "coursegrab.runner", *args]
 
 
 async def run_download(
