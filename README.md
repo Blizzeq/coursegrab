@@ -31,7 +31,7 @@ CourseGrab wraps [coursera-helper](https://github.com/coursera-helper/coursera-h
 ### From source
 
 ```bash
-git clone https://github.com/jkrasuski/coursegrab.git
+git clone https://github.com/Blizzeq/coursegrab.git
 cd coursegrab
 pip install -e .
 ```
@@ -71,7 +71,7 @@ pip install git+https://github.com/jkrasuski/coursegrab.git
 
 ```bash
 # Clone and install with dev dependencies
-git clone https://github.com/jkrasuski/coursegrab.git
+git clone https://github.com/Blizzeq/coursegrab.git
 cd coursegrab
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"

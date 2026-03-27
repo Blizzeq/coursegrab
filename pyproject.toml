@@ -41,8 +41,8 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/jkrasuski/coursegrab"
-Issues = "https://github.com/jkrasuski/coursegrab/issues"
+Repository = "https://github.com/Blizzeq/coursegrab"
+Issues = "https://github.com/Blizzeq/coursegrab/issues"
 
 [project.scripts]
 coursegrab = "coursegrab.main:cli"
