@@ -257,8 +257,11 @@
                                     <span
                                         class="material-symbols-outlined text-on-surface-variant text-lg">folder</span>
                                     <input id="output-dir"
-                                        class="flex-1 bg-transparent border-none text-xs font-label text-on-surface outline-none focus:ring-0 p-0"
+                                        class="flex-1 bg-transparent border-none text-xs font-label text-on-surface outline-none focus:ring-0 p-0 min-w-0"
                                         type="text" />
+                                    <button id="browse-btn" type="button"
+                                        class="shrink-0 text-[10px] font-label uppercase tracking-wider text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded hover:bg-primary/10"
+                                        title="Browse for folder">Browse</button>
                                 </div>
                             </div>
 
@@ -416,6 +419,27 @@
                 cauthInput.addEventListener('change', () => sessionStorage.setItem('coursera_cauth', cauthInput.value));
                 outputInput.addEventListener('change', () => localStorage.setItem('coursera_output_dir', outputInput.value));
                 subtitleLangs.addEventListener('change', () => localStorage.setItem('coursera_subtitle_langs', subtitleLangs.value));
+
+                // Browse folder button
+                const browseBtn = $('browse-btn');
+                browseBtn.addEventListener('click', async () => {
+                    browseBtn.disabled = true;
+                    browseBtn.textContent = '...';
+                    try {
+                        const start = encodeURIComponent(outputInput.value.trim());
+                        const res = await fetch(`/api/browse-folder?start=${start}`);
+                        const data = await res.json();
+                        if (data.path) {
+                            outputInput.value = data.path;
+                            localStorage.setItem('coursera_output_dir', data.path);
+                        }
+                    } catch (e) {
+                        console.error('Browse failed:', e);
+                    } finally {
+                        browseBtn.disabled = false;
+                        browseBtn.textContent = 'Browse';
+                    }
+                });
 
                 // CAUTH help tooltip
                 const cauthHelpBtn = $('cauth-help-btn');

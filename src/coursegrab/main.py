@@ -109,6 +109,35 @@ async def api_default_output() -> JSONResponse:
     return JSONResponse({"path": str(default)})
 
 
+@app.get("/api/browse-folder")
+async def api_browse_folder(start: str = "") -> JSONResponse:
+    """Open a native folder picker dialog and return the selected path."""
+    import threading
+
+    result: dict[str, str] = {}
+
+    def _pick() -> None:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        initial = start if start and Path(start).is_dir() else str(Path.home())
+        chosen = filedialog.askdirectory(initialdir=initial, title="Select output folder")
+        root.destroy()
+        if chosen:
+            result["path"] = chosen
+
+    thread = threading.Thread(target=_pick)
+    thread.start()
+    thread.join(timeout=120)
+
+    if "path" in result:
+        return JSONResponse({"path": result["path"]})
+    return JSONResponse({"path": ""})
+
+
 def _parse_options(data: dict) -> DownloadOptions:
     """Parse JSON request body into DownloadOptions."""
     return DownloadOptions(
