@@ -2,9 +2,11 @@
 
 import asyncio
 import logging
+import os
 import re
 import shlex
 import shutil
+import sys
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -152,12 +154,25 @@ def build_command_display(options: DownloadOptions) -> str:
     return " ".join(shlex.quote(c) for c in masked)
 
 
+def _find_coursera_helper() -> Optional[str]:
+    """Find the coursera-helper binary, checking venv bin dir first."""
+    # Check alongside sys.executable (works in venvs, e.g. Vercel)
+    venv_bin = os.path.dirname(sys.executable)
+    candidate = os.path.join(venv_bin, "coursera-helper")
+    if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+        return candidate
+    # Fallback to PATH
+    return shutil.which("coursera-helper")
+
+
 async def run_download(
     options: DownloadOptions,
     job: DownloadJob,
+    *,
+    skip_output_validation: bool = False,
 ) -> AsyncIterator[str]:
     """Run coursera-dl and yield log lines as they appear."""
-    errors = validate_options(options)
+    errors = validate_options(options, skip_output_validation=skip_output_validation)
     if errors:
         for err in errors:
             yield f"ERROR: {err}"
@@ -166,7 +181,7 @@ async def run_download(
     cmd = build_command(options)
     yield f"$ {build_command_display(options)}\n"
 
-    dl_path = shutil.which("coursera-helper")
+    dl_path = _find_coursera_helper()
     if not dl_path:
         yield "ERROR: coursera-helper not found. Install it with: pip install coursera-helper"
         return

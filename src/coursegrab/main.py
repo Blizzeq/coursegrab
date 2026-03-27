@@ -91,7 +91,7 @@ async def api_download(request: Request) -> StreamingResponse:
         try:
             yield _sse_event({"type": "started", "job_id": job_id})
 
-            async for line in run_download(options, job):
+            async for line in run_download(options, job, skip_output_validation=IS_VERCEL):
                 yield _sse_event({"type": "log", "message": line})
                 await asyncio.sleep(0)
 
