@@ -27,6 +27,7 @@ dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "coursera-helper>=0.12.3",
+    "setuptools>=68.0",  # provides distutils shim removed in Python 3.12+
 ]
 
 [project.optional-dependencies]
