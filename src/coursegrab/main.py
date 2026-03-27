@@ -112,6 +112,26 @@ async def api_default_output() -> JSONResponse:
 @app.get("/api/browse-folder")
 async def api_browse_folder(start: str = "") -> JSONResponse:
     """Open a native folder picker dialog and return the selected path."""
+    import platform
+    import subprocess
+
+    initial = start if start and Path(start).is_dir() else str(Path.home())
+
+    if platform.system() == "Darwin":
+        script = (
+            f'set p to POSIX path of (choose folder with prompt '
+            f'"Select output folder" default location POSIX file "{initial}")\n'
+            f'return p'
+        )
+        proc = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True, text=True, timeout=120,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            return JSONResponse({"path": proc.stdout.strip().rstrip("/")})
+        return JSONResponse({"path": ""})
+
+    # Fallback: tkinter for Linux/Windows
     import threading
 
     result: dict[str, str] = {}
@@ -123,8 +143,9 @@ async def api_browse_folder(start: str = "") -> JSONResponse:
         root = tk.Tk()
         root.withdraw()
         root.attributes("-topmost", True)
-        initial = start if start and Path(start).is_dir() else str(Path.home())
-        chosen = filedialog.askdirectory(initialdir=initial, title="Select output folder")
+        chosen = filedialog.askdirectory(
+            initialdir=initial, title="Select output folder"
+        )
         root.destroy()
         if chosen:
             result["path"] = chosen
