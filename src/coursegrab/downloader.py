@@ -17,6 +17,26 @@ logger = logging.getLogger(__name__)
 
 COURSERA_URL_PATTERN = re.compile(r"coursera\.org/learn/(?P<slug>[a-zA-Z0-9_-]+)")
 
+# Inline bootstrap for subprocess: activate setuptools distutils shim
+# (needed on Python 3.12+ where distutils was removed from stdlib)
+# then hand off to coursera-helper entry point.
+_RUNNER_CODE = """\
+try:
+    import _distutils_hack
+    _distutils_hack.ensure_local_distutils()
+except Exception:
+    try:
+        import importlib, sys
+        sys.modules.setdefault("distutils", \
+importlib.import_module("setuptools._distutils"))
+        sys.modules.setdefault("distutils.version", \
+importlib.import_module("setuptools._distutils.version"))
+    except Exception:
+        pass
+from coursera_helper.coursera_dl import main
+main()
+"""
+
 
 @dataclass
 class DownloadOptions:
@@ -180,11 +200,11 @@ def _build_exec_command(options: DownloadOptions) -> list[str]:
         cmd[0] = dl_path
         return cmd
 
-    # Fallback: invoke runner.py by absolute path (not -m) so it works
-    # even when cwd is changed to a writable directory on Vercel
-    runner_path = str(Path(__file__).parent / "runner.py")
+    # Fallback: use -c with inline distutils shim. The -c flag preserves
+    # the full sys.path (including Vercel vendor dirs), unlike running
+    # a script file which only adds the script's directory.
     args = cmd[1:]  # Everything after "coursera-helper"
-    return [sys.executable, runner_path, *args]
+    return [sys.executable, "-c", _RUNNER_CODE, *args]
 
 
 async def run_download(
